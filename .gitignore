@@ -1,0 +1,34 @@
+# Variables d'environnement avec mots de passe
+.env
+
+# Backups MongoDB
+backups/
+
+# Logs
+*.log
+logs/
+
+# Docker volumes locaux
+mongodb_data/
+mongodb_config/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (si vous synchronisez depuis local)
+node_modules/
+dist/
+build/
+
+# Fichiers temporaires
+tmp/
+temp/
+*.tmp
