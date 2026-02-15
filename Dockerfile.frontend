@@ -1,4 +1,4 @@
-# Dockerfile pour Angular Frontend
+# Dockerfile pour Angular Frontend avec SSL
 # Build stage
 FROM node:20-alpine AS builder
 
@@ -29,8 +29,8 @@ FROM nginx:alpine AS production
 # Supprimer la configuration par défaut
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copier notre configuration Nginx
-COPY nginx.conf /etc/nginx/conf.d/app.conf
+# Copier notre configuration Nginx avec SSL
+COPY nginx-ssl.conf /etc/nginx/conf.d/app.conf
 
 # Copier les fichiers buildés
 COPY --from=builder /app/dist/recipes/browser /usr/share/nginx/html
@@ -39,6 +39,9 @@ COPY --from=builder /app/dist/recipes/browser /usr/share/nginx/html
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html && \
     find /usr/share/nginx/html -type f -exec chmod 644 {} \;
+
+# Créer le dossier pour les certificats SSL
+RUN mkdir -p /etc/nginx/ssl
 
 # Vérifier que tout est prêt
 RUN echo "=== Configuration Nginx ===" && \
@@ -52,12 +55,12 @@ RUN echo "=== Configuration Nginx ===" && \
     test -f /usr/share/nginx/html/index.html && \
     echo "✓ Prêt à démarrer!"
 
-# Exposer le port 80
-EXPOSE 80
+# Exposer les ports 80 (HTTP) et 443 (HTTPS)
+EXPOSE 80 443
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --quiet --tries=1 --spider --no-check-certificate https://localhost/ || exit 1
 
 # Démarrer Nginx
 CMD ["nginx", "-g", "daemon off;"]

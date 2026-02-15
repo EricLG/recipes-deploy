@@ -11,8 +11,9 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
-    ports:
-      - "${MONGODB_PORT:-27017}:27017"
+    # Pas de ports exposés
+    # ports:
+    #   - "${MONGODB_PORT:-27017}:27017"
     networks:
       - app-network
     healthcheck:
@@ -21,7 +22,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend NestJS
   backend:
     build:
       context: ./backend
@@ -34,8 +34,9 @@ services:
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGIN: ${CORS_ORIGIN}
-    ports:
-      - "${BACKEND_PORT:-3000}:3000"
+    # Pas de ports exposés - accessible uniquement via Nginx
+    # ports:
+    #   - "${BACKEND_PORT:-3000}:3000"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -47,14 +48,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        API_URL: ${API_URL}
     container_name: app-frontend
     restart: unless-stopped
     environment:
       API_URL: ${API_URL}
     ports:
-      - "${FRONTEND_PORT:-4200}:80"
+      - "8080:80"       # HTTP sur 8080
+      - "8443:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:
