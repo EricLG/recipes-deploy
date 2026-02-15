@@ -35,12 +35,20 @@ COPY nginx.conf /etc/nginx/conf.d/app.conf
 # Copier les fichiers buildés
 COPY --from=builder /app/dist/recipes/browser /usr/share/nginx/html
 
+# Fixer les permissions pour tous les fichiers (y compris assets)
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html && \
+    find /usr/share/nginx/html -type f -exec chmod 644 {} \;
+
 # Vérifier que tout est prêt
 RUN echo "=== Configuration Nginx ===" && \
     cat /etc/nginx/conf.d/app.conf && \
     echo "" && \
     echo "=== Contenu HTML ===" && \
     ls -la /usr/share/nginx/html/ && \
+    echo "" && \
+    echo "=== Contenu Assets ===" && \
+    ls -la /usr/share/nginx/html/assets/ 2>/dev/null || echo "Pas de dossier assets" && \
     test -f /usr/share/nginx/html/index.html && \
     echo "✓ Prêt à démarrer!"
 
