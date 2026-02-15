@@ -7,6 +7,7 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY package*.json ./
 COPY tsconfig*.json ./
+COPY nest-cli.json ./
 
 # Installer TOUTES les dépendances (dev incluses) pour le build
 RUN npm ci && \
@@ -17,6 +18,14 @@ COPY src ./src
 
 # Builder l'application
 RUN npm run build
+
+# Debug: Afficher ce qui a été buildé
+RUN echo "=== Contenu après build ===" && \
+    ls -la && \
+    echo "=== Contenu de dist ===" && \
+    ls -la dist/ && \
+    echo "=== Recherche de main.js ===" && \
+    find dist -name "main.js" -type f
 
 # Installer seulement les dépendances de production pour l'image finale
 RUN npm ci --only=production && \
@@ -31,15 +40,22 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# Copier package.json pour réinstaller seulement les dépendances de production
+# Copier package.json pour référence
 COPY --from=builder /app/package*.json ./
 
-# Installer uniquement les dépendances de production
-RUN npm ci --only=production && \
-    npm cache clean --force
+# Copier les node_modules de production
+COPY --from=builder /app/node_modules ./node_modules
 
-# Copier le build
+# Copier le build complet (tout le dossier dist)
 COPY --from=builder /app/dist ./dist
+
+# Debug: Vérifier ce qui a été copié
+RUN echo "=== Contenu final de /app ===" && \
+    ls -la && \
+    echo "=== Contenu de dist ===" && \
+    ls -la dist/ && \
+    echo "=== Recherche de main.js ===" && \
+    find . -name "main.js" -type f
 
 # Changer les permissions
 RUN chown -R nestjs:nodejs /app
@@ -52,4 +68,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 
-CMD ["node", "dist/src/main.js"]
+# Démarrage flexible : chercher main.js automatiquement
+CMD ["sh", "-c", "node $(find dist -name main.js -type f | head -n 1)"]
