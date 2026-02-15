@@ -38,8 +38,9 @@ check_requirements() {
         exit 1
     fi
 
-    if ! command -v docker compose &> /dev/null; then
-        print_error "Docker Compose n'est pas installé"
+    if ! docker compose version &> /dev/null; then
+        print_error "Docker Compose n'est pas installé ou n'est pas la v2"
+        print_info "Essayez: docker compose version"
         exit 1
     fi
 
@@ -135,17 +136,32 @@ restart() {
 backup() {
     print_info "Création d'un backup MongoDB..."
 
+    # Charger les variables depuis .env
+    if [ ! -f .env ]; then
+        print_error "Fichier .env introuvable"
+        exit 1
+    fi
+
+    source .env
+
     BACKUP_DIR="./backups"
     mkdir -p "$BACKUP_DIR"
 
     DATE=$(date +%Y%m%d_%H%M%S)
     BACKUP_NAME="mongodb_backup_$DATE"
 
+    print_info "Connexion avec l'utilisateur: ${MONGO_INITDB_ROOT_USERNAME}"
+
     docker exec app-mongodb mongodump \
         --username "${MONGO_INITDB_ROOT_USERNAME}" \
         --password "${MONGO_INITDB_ROOT_PASSWORD}" \
         --authenticationDatabase admin \
         --out "/tmp/$BACKUP_NAME"
+
+    if [ $? -ne 0 ]; then
+        print_error "Échec du dump MongoDB"
+        exit 1
+    fi
 
     docker cp "app-mongodb:/tmp/$BACKUP_NAME" "$BACKUP_DIR/"
 
@@ -171,6 +187,14 @@ restore() {
         exit 1
     fi
 
+    # Charger les variables depuis .env
+    if [ ! -f .env ]; then
+        print_error "Fichier .env introuvable"
+        exit 1
+    fi
+
+    source .env
+
     print_warning "ATTENTION: Cette opération va écraser la base de données actuelle"
     read -p "Voulez-vous continuer? (y/N) " -n 1 -r
     echo
@@ -190,12 +214,20 @@ restore() {
     docker cp "$TEMP_DIR/$BACKUP_NAME" "app-mongodb:/tmp/"
 
     # Restauration
+    print_info "Connexion avec l'utilisateur: ${MONGO_INITDB_ROOT_USERNAME}"
+
     docker exec app-mongodb mongorestore \
         --username "${MONGO_INITDB_ROOT_USERNAME}" \
         --password "${MONGO_INITDB_ROOT_PASSWORD}" \
         --authenticationDatabase admin \
         --drop \
         "/tmp/$BACKUP_NAME"
+
+    if [ $? -ne 0 ]; then
+        print_error "Échec de la restauration"
+        rm -rf "$TEMP_DIR"
+        exit 1
+    fi
 
     # Nettoyage
     rm -rf "$TEMP_DIR"
