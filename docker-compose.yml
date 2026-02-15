@@ -41,9 +41,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
 
   # Frontend Angular
   frontend:
