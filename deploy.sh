@@ -63,30 +63,80 @@ check_requirements() {
 prepare_build_files() {
     print_info "Préparation des fichiers de build..."
 
+    # Vérifier qu'on est dans recipes-deploy
+    CURRENT_DIR=$(basename "$PWD")
+    if [ "$CURRENT_DIR" != "recipes-deploy" ]; then
+        print_error "Ce script doit être exécuté depuis le dossier recipes-deploy"
+        print_info "Dossier actuel: $PWD"
+        exit 1
+    fi
+
     # Copier le Dockerfile du backend
     if [ -f Dockerfile.backend ]; then
-        cp Dockerfile.backend ../recipes-back/Dockerfile
-        print_success "Dockerfile.backend copié dans recipes-back/"
+        print_info "Copie: Dockerfile.backend → ../recipes-back/Dockerfile"
+        cp -v Dockerfile.backend ../recipes-back/Dockerfile
+        if [ $? -eq 0 ]; then
+            print_success "Dockerfile.backend copié dans recipes-back/"
+        else
+            print_error "Échec de la copie de Dockerfile.backend"
+            exit 1
+        fi
     else
-        print_error "Dockerfile.backend introuvable"
+        print_error "Dockerfile.backend introuvable dans $PWD"
+        ls -la Dockerfile.* 2>/dev/null || print_error "Aucun Dockerfile trouvé"
         exit 1
     fi
 
     # Copier le Dockerfile du frontend
     if [ -f Dockerfile.frontend ]; then
-        cp Dockerfile.frontend ../recipes-front/Dockerfile
-        print_success "Dockerfile.frontend copié dans recipes-front/"
+        print_info "Copie: Dockerfile.frontend → ../recipes-front/Dockerfile"
+        cp -v Dockerfile.frontend ../recipes-front/Dockerfile
+        if [ $? -eq 0 ]; then
+            print_success "Dockerfile.frontend copié dans recipes-front/"
+        else
+            print_error "Échec de la copie de Dockerfile.frontend"
+            exit 1
+        fi
     else
-        print_error "Dockerfile.frontend introuvable"
+        print_error "Dockerfile.frontend introuvable dans $PWD"
         exit 1
     fi
 
     # Copier la configuration Nginx
     if [ -f nginx-ssl.conf ]; then
-        cp nginx-ssl.conf ../recipes-front/nginx-ssl.conf
-        print_success "nginx-ssl.conf copié dans recipes-front/"
+        print_info "Copie: nginx-ssl.conf → ../recipes-front/nginx-ssl.conf"
+        cp -v nginx-ssl.conf ../recipes-front/nginx-ssl.conf
+        if [ $? -eq 0 ]; then
+            print_success "nginx-ssl.conf copié dans recipes-front/"
+        else
+            print_error "Échec de la copie de nginx-ssl.conf"
+            exit 1
+        fi
     else
-        print_error "nginx-ssl.conf introuvable"
+        print_error "nginx-ssl.conf introuvable dans $PWD"
+        exit 1
+    fi
+
+    # Vérifier que les fichiers ont bien été copiés
+    print_info "Vérification des fichiers copiés..."
+    if [ -f ../recipes-back/Dockerfile ]; then
+        print_success "✓ recipes-back/Dockerfile présent"
+    else
+        print_error "✗ recipes-back/Dockerfile manquant"
+        exit 1
+    fi
+
+    if [ -f ../recipes-front/Dockerfile ]; then
+        print_success "✓ recipes-front/Dockerfile présent"
+    else
+        print_error "✗ recipes-front/Dockerfile manquant"
+        exit 1
+    fi
+
+    if [ -f ../recipes-front/nginx-ssl.conf ]; then
+        print_success "✓ recipes-front/nginx-ssl.conf présent"
+    else
+        print_error "✗ recipes-front/nginx-ssl.conf manquant"
         exit 1
     fi
 
