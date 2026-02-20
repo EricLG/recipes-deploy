@@ -59,6 +59,40 @@ check_requirements() {
     print_success "Tous les prérequis sont satisfaits"
 }
 
+# Fonction pour préparer les fichiers de build
+prepare_build_files() {
+    print_info "Préparation des fichiers de build..."
+
+    # Copier le Dockerfile du backend
+    if [ -f Dockerfile.backend ]; then
+        cp Dockerfile.backend ../recipes-back/Dockerfile
+        print_success "Dockerfile.backend copié dans recipes-back/"
+    else
+        print_error "Dockerfile.backend introuvable"
+        exit 1
+    fi
+
+    # Copier le Dockerfile du frontend
+    if [ -f Dockerfile.frontend ]; then
+        cp Dockerfile.frontend ../recipes-front/Dockerfile
+        print_success "Dockerfile.frontend copié dans recipes-front/"
+    else
+        print_error "Dockerfile.frontend introuvable"
+        exit 1
+    fi
+
+    # Copier la configuration Nginx
+    if [ -f nginx-ssl.conf ]; then
+        cp nginx-ssl.conf ../recipes-front/nginx-ssl.conf
+        print_success "nginx-ssl.conf copié dans recipes-front/"
+    else
+        print_error "nginx-ssl.conf introuvable"
+        exit 1
+    fi
+
+    print_success "Fichiers de build préparés"
+}
+
 # Fonction pour afficher le statut
 status() {
     print_info "Statut des conteneurs:"
@@ -89,6 +123,9 @@ deploy() {
     print_info "Déploiement de l'application..."
     check_requirements
 
+    # Préparer les fichiers de build
+    prepare_build_files
+
     print_info "Build des images Docker..."
     docker compose build --no-cache
 
@@ -107,8 +144,8 @@ deploy() {
     echo ""
     print_info "Accès à l'application:"
     IP=$(hostname -I | awk '{print $1}')
-    echo -e "  Frontend: ${GREEN}http://${IP}:4200${NC}"
-    echo -e "  Backend:  ${GREEN}http://${IP}:3000${NC}"
+    echo -e "  Frontend: ${GREEN}https://${IP}:8443${NC}"
+    echo -e "  Backend:  ${GREEN}(accessible via /api uniquement)${NC}"
 }
 
 # Fonction pour voir les logs

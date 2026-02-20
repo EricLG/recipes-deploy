@@ -22,9 +22,10 @@ services:
       timeout: 5s
       retries: 5
 
+  # Backend NestJS
   backend:
     build:
-      context: ./backend
+      context: ../recipes-back
       dockerfile: Dockerfile
     container_name: app-backend
     restart: unless-stopped
@@ -33,7 +34,6 @@ services:
       PORT: ${BACKEND_PORT:-3000}
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGIN: ${CORS_ORIGIN}
     # Pas de ports exposés - accessible uniquement via Nginx
     # ports:
     #   - "${BACKEND_PORT:-3000}:3000"
@@ -46,17 +46,17 @@ services:
   # Frontend Angular
   frontend:
     build:
-      context: ./frontend
+      context: ../recipes-front
       dockerfile: Dockerfile
     container_name: app-frontend
     restart: unless-stopped
     environment:
       API_URL: ${API_URL}
     ports:
-      - "8080:80"       # HTTP sur 8080
-      - "8443:443"
+      - "8080:80"   # HTTP sur port 8080
+      - "8443:443"  # HTTPS sur port 8443
     volumes:
-      - ./ssl:/etc/nginx/ssl:ro
+      - ./ssl:/etc/nginx/ssl:ro  # Certificats SSL en lecture seule
     depends_on:
       - backend
     networks:

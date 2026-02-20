@@ -47,7 +47,7 @@ cp Dockerfile.backend backend/Dockerfile
 
 # Frontend
 cp Dockerfile.frontend frontend/Dockerfile
-cp nginx.conf frontend/nginx.conf
+cp nginx-ssl.conf frontend/nginx-ssl.conf
 ```
 
 ### 5️⃣ Déployer
@@ -73,7 +73,7 @@ Ouvrez votre navigateur:
 - `docker-compose.yml` - Orchestration des services
 - `Dockerfile.backend` - Image Docker pour NestJS
 - `Dockerfile.frontend` - Image Docker pour Angular
-- `nginx.conf` - Configuration serveur web
+- `nginx-ssl.conf` - Configuration serveur web
 - `.env.example` - Template de configuration
 - `deploy.sh` - Script de gestion
 - `GUIDE_DEPLOIEMENT.md` - Guide complet détaillé
