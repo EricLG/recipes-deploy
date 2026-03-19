@@ -49,6 +49,9 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copier le build complet (tout le dossier dist)
 COPY --from=builder /app/dist ./dist
 
+# Copier la structure du dossier uploads
+COPY --chown=nestjs:nodejs uploads ./uploads
+
 # Debug: Vérifier ce qui a été copié
 RUN echo "=== Contenu final de /app ===" && \
     ls -la && \
