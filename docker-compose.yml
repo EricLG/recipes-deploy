@@ -34,6 +34,8 @@ services:
       PORT: ${BACKEND_PORT:-3000}
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - uploads_data:/app/uploads
     # Pas de ports exposés - accessible uniquement via Nginx
     # ports:
     #   - "${BACKEND_PORT:-3000}:3000"
@@ -57,6 +59,7 @@ services:
       - "8443:443"  # HTTPS sur port 8443
     volumes:
       - ./ssl:/etc/nginx/ssl:ro  # Certificats SSL en lecture seule
+      - uploads_data:/usr/share/nginx/uploads:ro
     depends_on:
       - backend
     networks:
@@ -70,4 +73,6 @@ volumes:
   mongodb_data:
     driver: local
   mongodb_config:
+    driver: local
+  uploads_data:
     driver: local
