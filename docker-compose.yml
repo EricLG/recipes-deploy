@@ -34,6 +34,7 @@ services:
       PORT: ${BACKEND_PORT:-3000}
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
     volumes:
       - uploads_data:/app/uploads
     # Pas de ports exposés - accessible uniquement via Nginx
