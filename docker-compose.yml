@@ -11,9 +11,6 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
-    # Pas de ports exposés
-    # ports:
-    #   - "${MONGODB_PORT:-27017}:27017"
     networks:
       - app-network
     healthcheck:
@@ -36,9 +33,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     volumes:
       - uploads_data:/app/uploads
-    # Pas de ports exposés - accessible uniquement via Nginx
-    # ports:
-    #   - "${BACKEND_PORT:-3000}:3000"
     depends_on:
       mongodb:
         condition: service_healthy
