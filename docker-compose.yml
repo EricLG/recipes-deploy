@@ -1,5 +1,30 @@
 services:
-  # Base de données MongoDB
+  # DDNS - Mise à jour IP automatique
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    restart: unless-stopped
+    environment:
+      - SUBDOMAINS=la-taverne-de-may
+      - TOKEN=${DUCKDNS_TOKEN}
+      - TZ=Europe/Paris
+
+  # Reverse proxy + SSL
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "127.0.0.1:81:81"
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - app-network
+
+  # MongoDB - inchangé
   mongodb:
     image: mongo:8
     container_name: app-mongodb
@@ -11,11 +36,8 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
-    # Pas de ports exposés
-    # ports:
-    #   - "${MONGODB_PORT:-27017}:27017"
     networks:
-      - app-network
+      - backend-network
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
@@ -34,16 +56,13 @@ services:
       PORT: ${BACKEND_PORT:-3000}
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
-      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
     volumes:
       - uploads_data:/app/uploads
-    # Pas de ports exposés - accessible uniquement via Nginx
-    # ports:
-    #   - "${BACKEND_PORT:-3000}:3000"
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
+      - backend-network
       - app-network
 
   # Frontend Angular
@@ -53,13 +72,9 @@ services:
       dockerfile: Dockerfile
     container_name: app-frontend
     restart: unless-stopped
-    environment:
-      API_URL: ${API_URL}
     ports:
-      - "8080:80"   # HTTP sur port 8080
-      - "8443:443"  # HTTPS sur port 8443
+      - "127.0.0.1:8080:80"   # Local uniquement, HTTP simple
     volumes:
-      - ./ssl:/etc/nginx/ssl:ro  # Certificats SSL en lecture seule
       - uploads_data:/usr/share/nginx/uploads:ro
     depends_on:
       - backend
@@ -69,11 +84,13 @@ services:
 networks:
   app-network:
     driver: bridge
+  backend-network:
+    driver: bridge
+    internal: true
 
 volumes:
+  npm_data:
+  npm_letsencrypt:
   mongodb_data:
-    driver: local
   mongodb_config:
-    driver: local
   uploads_data:
-    driver: local

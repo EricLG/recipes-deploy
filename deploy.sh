@@ -243,6 +243,7 @@ backup() {
         --username "${MONGO_INITDB_ROOT_USERNAME}" \
         --password "${MONGO_INITDB_ROOT_PASSWORD}" \
         --authenticationDatabase admin \
+        --db=recipes
         --out "/tmp/$BACKUP_NAME"
 
     if [ $? -ne 0 ]; then
