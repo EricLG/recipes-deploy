@@ -29,7 +29,7 @@ Organisez votre projet comme suit sur votre NAS:
 │   └── tsconfig.json
 └── frontend/
     ├── Dockerfile
-    ├── nginx-ssl.conf
+    ├── nginx.conf
     ├── src/
     ├── angular.json
     └── package.json
@@ -144,7 +144,7 @@ cp Dockerfile.backend backend/Dockerfile
 cp Dockerfile.frontend frontend/Dockerfile
 
 # Copier la config Nginx
-cp nginx-ssl.conf frontend/nginx-ssl.conf
+cp nginx.conf frontend/nginx.conf
 ```
 
 ---

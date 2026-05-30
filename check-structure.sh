@@ -49,7 +49,7 @@ FILES=(
     "docker-compose.yml"
     "Dockerfile.backend"
     "Dockerfile.frontend"
-    "nginx-ssl.conf"
+    "nginx.conf"
     "deploy.sh"
     ".env"
 )
@@ -82,10 +82,10 @@ else
     echo -e "${YELLOW}  ⊘ recipes-front/Dockerfile (sera copié au deploy)${NC}"
 fi
 
-if [ -f "../recipes-front/nginx-ssl.conf" ]; then
-    echo -e "${GREEN}  ✓ recipes-front/nginx-ssl.conf${NC}"
+if [ -f "../recipes-front/nginx.conf" ]; then
+    echo -e "${GREEN}  ✓ recipes-front/nginx.conf${NC}"
 else
-    echo -e "${YELLOW}  ⊘ recipes-front/nginx-ssl.conf (sera copié au deploy)${NC}"
+    echo -e "${YELLOW}  ⊘ recipes-front/nginx.conf (sera copié au deploy)${NC}"
 fi
 
 echo ""
@@ -121,8 +121,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     cp -v Dockerfile.frontend ../recipes-front/Dockerfile
     
     echo ""
-    echo "Copie de nginx-ssl.conf..."
-    cp -v nginx-ssl.conf ../recipes-front/nginx-ssl.conf
+    echo "Copie de nginx.conf..."
+    cp -v nginx.conf ../recipes-front/nginx.conf
     
     echo ""
     echo -e "${GREEN}✅ Copie terminée${NC}"
@@ -131,7 +131,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Vérification:"
     ls -lh ../recipes-back/Dockerfile
     ls -lh ../recipes-front/Dockerfile
-    ls -lh ../recipes-front/nginx-ssl.conf
+    ls -lh ../recipes-front/nginx.conf
 fi
 
 echo ""
