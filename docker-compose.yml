@@ -23,6 +23,7 @@ services:
       - npm_letsencrypt:/etc/letsencrypt
     networks:
       - app-network
+      - proxy-network
 
   # MongoDB - inchangé
   mongodb:
@@ -87,6 +88,8 @@ networks:
   backend-network:
     driver: bridge
     internal: true
+  proxy-network:
+    external: true
 
 volumes:
   npm_data:
