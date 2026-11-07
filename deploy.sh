@@ -6,6 +6,8 @@
 
 set -e
 
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
 # Couleurs
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -53,21 +55,24 @@ check_requirements() {
     fi
 
     if [ ! -f .env ]; then
-        print_warning "Fichier .env manquant. Copie depuis .env.example..."
-        if [ -f .env.example ]; then
-            cp .env.example .env
+        print_warning "Fichier .env manquant. Copie depuis .env.exemple..."
+        if [ -f .env.exemple ]; then
+            cp .env.exemple .env
             print_warning "Éditez le fichier .env avant de déployer"
             exit 1
         else
-            print_error "Fichier .env.example introuvable"
+            print_error "Fichier .env.exemple introuvable"
             exit 1
         fi
     fi
 
+    docker network inspect proxy-network > /dev/null
+    docker compose config --quiet
+
     # Vérifier les variables critiques
     load_env
     local missing=0
-    for var in MONGO_INITDB_ROOT_USERNAME MONGO_INITDB_ROOT_PASSWORD MONGO_INITDB_DATABASE JWT_SECRET DUCKDNS_TOKEN; do
+    for var in MONGO_INITDB_ROOT_USERNAME MONGO_INITDB_ROOT_PASSWORD MONGO_INITDB_DATABASE JWT_SECRET; do
         if [ -z "${!var}" ]; then
             print_error "Variable manquante dans .env : $var"
             missing=1
@@ -144,7 +149,8 @@ status() {
 # ---------------------------------------------------------------------------
 start() {
     print_info "Démarrage des services..."
-    docker compose up -d
+    check_requirements
+    docker compose up -d --wait --wait-timeout 180
     print_success "Services démarrés"
     sleep 3
     status
@@ -168,16 +174,10 @@ deploy() {
     prepare_build_files
 
     print_info "Build des images Docker..."
-    docker compose build --no-cache
+    docker compose build
 
-    print_info "Arrêt des anciens conteneurs..."
-    docker compose down
-
-    print_info "Démarrage des nouveaux conteneurs..."
-    docker compose up -d
-
-    print_info "Attente du démarrage des services (15s)..."
-    sleep 15
+    print_info "Mise a jour et verification de la sante des services..."
+    docker compose up -d --wait --wait-timeout 180
 
     print_success "Déploiement terminé!"
     status
@@ -186,8 +186,8 @@ deploy() {
     print_info "Accès à l'application:"
     IP=$(hostname -I | awk '{print $1}')
     echo -e "  Site public  : ${GREEN}https://${SUBDOMAINS:-la-taverne-de-may}.duckdns.org${NC}"
-    echo -e "  Réseau local : ${GREEN}http://${IP}:8080${NC}"
-    echo -e "  Proxy Manager: ${GREEN}http://${IP}:81${NC} (admin NPM — local uniquement)"
+    echo -e "  Réseau local : ${GREEN}http://127.0.0.1:8080 (depuis le NAS)${NC}"
+    echo -e "  Proxy Manager: ${GREEN}http://${IP}:81${NC} (infra-stack ; acces selon pare-feu)"
     echo -e "  Backend      : ${GREEN}(accessible via /api uniquement)${NC}"
 }
 
@@ -308,7 +308,7 @@ restore() {
 # Nettoyage (DESTRUCTIF)
 # ---------------------------------------------------------------------------
 clean() {
-    print_warning "⚠️  ATTENTION : Cette opération supprime les conteneurs, images ET VOLUMES."
+    print_warning "⚠️  ATTENTION : Cette opération supprime les conteneurs ET VOLUMES recipes."
     print_warning "Toutes les données (MongoDB, uploads) seront PERDUES définitivement."
     print_info "Pensez à faire un backup d'abord : ./deploy.sh backup"
     echo ""
@@ -320,7 +320,6 @@ clean() {
     fi
 
     docker compose down -v
-    docker system prune -a -f
 
     print_success "Nettoyage terminé"
 }
@@ -345,7 +344,7 @@ ${YELLOW}Commandes:${NC}
   ${BLUE}logs${NC} [service] Afficher les logs (tous ou service spécifique)
   ${BLUE}backup${NC}         Créer un backup MongoDB
   ${BLUE}restore${NC} <file> Restaurer MongoDB depuis un backup
-  ${BLUE}clean${NC}          ⚠️  Nettoyer conteneurs, images ET volumes (données perdues)
+  ${BLUE}clean${NC}          ⚠️  Nettoyer conteneurs et volumes recipes (données perdues)
   ${BLUE}help${NC}           Afficher cette aide
 
 ${YELLOW}Exemples:${NC}
@@ -356,15 +355,13 @@ ${YELLOW}Exemples:${NC}
   ./deploy.sh restore backups/mongodb_backup_20240215_120000.tar.gz
 
 ${YELLOW}Services disponibles:${NC}
-  - duckdns             (Mise à jour IP dynamique)
-  - nginx-proxy-manager (Reverse proxy + SSL Let's Encrypt)
   - mongodb             (Base de données)
   - backend             (API NestJS)
   - frontend            (Application Angular)
 
 ${YELLOW}Accès:${NC}
   Site public   : https://la-taverne-de-may.duckdns.org
-  Admin NPM     : http://<ip-nas>:81  (réseau local uniquement)
+  Admin NPM     : http://<ip-nas>:81  (infra-stack)
 EOF
 }
 
