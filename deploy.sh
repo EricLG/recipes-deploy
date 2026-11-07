@@ -217,94 +217,6 @@ restart() {
 }
 
 # ---------------------------------------------------------------------------
-# Backup MongoDB
-# ---------------------------------------------------------------------------
-backup() {
-    print_info "Création d'un backup MongoDB..."
-    load_env
-
-    BACKUP_DIR="./backups"
-    mkdir -p "$BACKUP_DIR"
-
-    DATE=$(date +%Y%m%d_%H%M%S)
-    BACKUP_NAME="mongodb_backup_$DATE"
-
-    print_info "Dump de la base '${MONGO_INITDB_DATABASE}' en cours..."
-
-    docker exec app-mongodb mongodump \
-        --username "${MONGO_INITDB_ROOT_USERNAME}" \
-        --password "${MONGO_INITDB_ROOT_PASSWORD}" \
-        --authenticationDatabase admin \
-        --db="${MONGO_INITDB_DATABASE}" \
-        --out "/tmp/${BACKUP_NAME}"
-
-    docker cp "app-mongodb:/tmp/${BACKUP_NAME}" "${BACKUP_DIR}/"
-
-    # Nettoyage dans le conteneur
-    docker exec app-mongodb rm -rf "/tmp/${BACKUP_NAME}"
-
-    # Compression locale
-    tar -czf "${BACKUP_DIR}/${BACKUP_NAME}.tar.gz" -C "${BACKUP_DIR}" "${BACKUP_NAME}"
-    rm -rf "${BACKUP_DIR:?}/${BACKUP_NAME}"
-
-    print_success "Backup créé : ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
-
-    # Garder uniquement les 7 derniers backups
-    local count
-    count=$(ls "${BACKUP_DIR}"/mongodb_backup_*.tar.gz 2>/dev/null | wc -l)
-    if [ "$count" -gt 7 ]; then
-        ls -t "${BACKUP_DIR}"/mongodb_backup_*.tar.gz | tail -n +8 | xargs -r rm -f
-        print_info "Anciens backups nettoyés (conservation des 7 derniers)"
-    fi
-}
-
-# ---------------------------------------------------------------------------
-# Restauration MongoDB
-# ---------------------------------------------------------------------------
-restore() {
-    if [ -z "$1" ]; then
-        print_error "Usage: ./deploy.sh restore <fichier_backup.tar.gz>"
-        exit 1
-    fi
-
-    if [ ! -f "$1" ]; then
-        print_error "Fichier $1 introuvable"
-        exit 1
-    fi
-
-    load_env
-
-    print_warning "ATTENTION: Cette opération va écraser la base de données actuelle !"
-    read -p "Voulez-vous continuer? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Opération annulée"
-        exit 0
-    fi
-
-    print_info "Restauration de $1..."
-
-    TEMP_DIR=$(mktemp -d)
-    tar -xzf "$1" -C "$TEMP_DIR"
-
-    BACKUP_NAME=$(basename "$1" .tar.gz)
-    docker cp "${TEMP_DIR}/${BACKUP_NAME}" "app-mongodb:/tmp/"
-
-    docker exec app-mongodb mongorestore \
-        --username "${MONGO_INITDB_ROOT_USERNAME}" \
-        --password "${MONGO_INITDB_ROOT_PASSWORD}" \
-        --authenticationDatabase admin \
-        --drop \
-        "/tmp/${BACKUP_NAME}"
-
-    # Nettoyage
-    docker exec app-mongodb rm -rf "/tmp/${BACKUP_NAME}"
-    rm -rf "$TEMP_DIR"
-
-    print_success "Restauration terminée"
-}
-
-# ---------------------------------------------------------------------------
 # Nettoyage (DESTRUCTIF)
 # ---------------------------------------------------------------------------
 clean() {
@@ -342,8 +254,8 @@ ${YELLOW}Commandes:${NC}
   ${BLUE}restart${NC} [svc]  Redémarrer tous les services ou un service spécifique
   ${BLUE}status${NC}         Afficher le statut des conteneurs
   ${BLUE}logs${NC} [service] Afficher les logs (tous ou service spécifique)
-  ${BLUE}backup${NC}         Créer un backup MongoDB
-  ${BLUE}restore${NC} <file> Restaurer MongoDB depuis un backup
+  ${BLUE}backup${NC}         Créer un backup MongoDB + images
+  ${BLUE}restore${NC} <file> Restaurer MongoDB et images (backup.sh)
   ${BLUE}clean${NC}          ⚠️  Nettoyer conteneurs et volumes recipes (données perdues)
   ${BLUE}help${NC}           Afficher cette aide
 
@@ -352,7 +264,7 @@ ${YELLOW}Exemples:${NC}
   ./deploy.sh logs backend         # Logs du backend
   ./deploy.sh restart frontend     # Redémarrer le frontend
   ./deploy.sh backup               # Créer un backup
-  ./deploy.sh restore backups/mongodb_backup_20240215_120000.tar.gz
+  ./deploy.sh restore backups/recipes_backup_*.tar.gz
 
 ${YELLOW}Services disponibles:${NC}
   - mongodb             (Base de données)
@@ -375,8 +287,8 @@ case "$1" in
     restart)  restart "$2" ;;
     status)   status ;;
     logs)     logs "$2" ;;
-    backup)   backup ;;
-    restore)  restore "$2" ;;
+    backup)   bash ./backup.sh create ;;
+    restore)  bash ./backup.sh restore "${2:-}" ;;
     clean)    clean ;;
     help|--help|-h|"") help ;;
     *)

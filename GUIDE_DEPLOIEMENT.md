@@ -80,18 +80,11 @@ parcours metier apres deploiement. Il ne configure pas le proxy partage.
 `./deploy.sh stop` arrete la stack recipes ; `start` la redemarre.
 `restart frontend` redemarre seulement le frontend.
 
-## Sauvegardes et limites actuelles
+## Sauvegardes
 
-`./deploy.sh backup` sauvegarde seulement MongoDB dans `backups/` et conserve
-les sept dernieres archives. `restore <archive.tar.gz>` restaure les collections
-avec `--drop` apres confirmation. Tester une restauration dans un environnement
-isole avant de considerer cette sauvegarde comme validee.
-Les uploads, secrets et configurations infra-stack doivent etre sauvegardes
-separement. Leur automatisation et les corrections du script de synchronisation
-locale restent a traiter.
+Voir [BACKUPS.md](BACKUPS.md) pour la sauvegarde et la restauration de MongoDB
+et des images via `backup.sh`. `deploy.sh backup` et `deploy.sh restore` deleguent
+au nouveau script. La synchronisation locale et infra-stack restent separees.
 
-`./deploy.sh clean` supprime les conteneurs et volumes declares de recipes
-apres confirmation : MongoDB et uploads sont perdus. Cette commande n'effectue
-plus de nettoyage Docker global. Ne pas l'utiliser pendant la migration.
-
-Les builds Docker et les tests HTTP doivent etre verifies sur le NAS.
+`./deploy.sh clean` supprime les conteneurs et volumes recipes apres confirmation.
+MongoDB et images sont alors perdus. Ne pas utiliser pour une maintenance normale.

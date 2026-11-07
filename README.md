@@ -4,6 +4,7 @@ La stack contient MongoDB, le backend NestJS et le frontend Nginx/Angular.
 DuckDNS et Nginx Proxy Manager sont geres par `infra-stack`.
 
 Voir [GUIDE_DEPLOIEMENT.md](GUIDE_DEPLOIEMENT.md) pour la migration et les commandes.
+Voir [BACKUPS.md](BACKUPS.md) pour sauvegarder et restaurer MongoDB et les images.
 
 Architecture : proxy partage -> recipes-frontend:80 -> backend:3000 -> mongodb:27017.
 Le frontend rejoint le reseau externe `proxy-network` avec l'alias `recipes-frontend`.
