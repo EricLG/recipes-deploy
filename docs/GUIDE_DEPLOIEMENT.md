@@ -80,6 +80,36 @@ parcours metier apres deploiement. Il ne configure pas le proxy partage.
 `./scripts/deploy.sh stop` arrete la stack recipes ; `start` la redemarre.
 `restart frontend` redemarre seulement le frontend.
 
+## Limite des uploads
+
+Le Nginx du frontend accepte des corps de requete de 6 Mio
+(`client_max_body_size 6m` dans `config/nginx.conf`). Le backend conserve sa
+limite de 5 Mio par image ; la marge couvre les autres champs et le multipart.
+
+Dans Nginx Proxy Manager, editer le Proxy Host de
+`la-taverne-de-may.duckdns.org`, onglet Advanced, et ajouter (ou ajuster si deja
+presente) la directive suivante, en conservant les autres reglages :
+
+```nginx
+client_max_body_size 6m;
+```
+
+Enregistrer. Ce reglage est propre au domaine recipes ; il ne necessite aucune
+modification du Compose infra-stack.
+
+Apres transfert de la configuration, depuis recipes-deploy sur le NAS :
+
+```bash
+cp config/nginx.conf ../recipes-front/nginx.conf
+docker compose build frontend
+docker compose up -d --no-deps --wait --wait-timeout 180 frontend
+docker compose exec -T frontend nginx -t
+```
+
+Tester via le domaine public l'ajout d'une image entre 1 et 5 Mio, puis verifier
+son affichage. Une image superieure a 5 Mio reste refusee par le backend ; un
+corps de requete superieur a 6 Mio est refuse par Nginx (HTTP 413).
+
 ## Sauvegardes
 
 Voir [BACKUPS.md](BACKUPS.md) pour la sauvegarde et la restauration de MongoDB
