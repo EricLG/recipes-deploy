@@ -2,7 +2,9 @@
 # Sauvegarde applicative : MongoDB et volume uploads, sans secrets ni infra.
 set -euo pipefail
 umask 077
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+BACKUP_DIR="$(cd .. && pwd)/backups"
 
 log() { printf '%s\n' "$*" >&2; }
 die() { log "Erreur : $*"; exit 1; }
@@ -77,7 +79,7 @@ verify() {
 create() {
     local name destination
     name="recipes_backup_$(date -u +%Y%m%d_%H%M%S)_$$.tar.gz"
-    destination="$PWD/backups/$name"
+    destination="$BACKUP_DIR/$name"
     database > "$work/database"
     [[ -s "$work/database" ]] || die 'Nom de base absent.'
     printf 'recipes-backup-v1\n' > "$work/format"
@@ -121,7 +123,7 @@ restore() {
 
 case "${1:-help}" in
     help|--help|-h)
-        echo 'Usage : bash backup.sh create | verify <archive> | list | restore <archive>'
+        echo 'Usage : bash scripts/backup.sh create | verify <archive> | list | restore <archive>'
         exit 0 ;;
     create|verify|restore|list) ;;
     *) die 'Commande inconnue.' ;;
@@ -129,13 +131,13 @@ esac
 for tool in docker tar gzip sha256sum flock cmp; do
     command -v "$tool" > /dev/null || die "Commande manquante : $tool"
 done
-mkdir -p backups
-exec 9>backups/.backup.lock
+mkdir -p "$BACKUP_DIR"
+exec 9>"$BACKUP_DIR/.backup.lock"
 flock -n 9 || die 'Une sauvegarde ou restauration est deja en cours.'
-work=$(mktemp -d "$PWD/backups/.work.XXXXXXXX")
+work=$(mktemp -d "$BACKUP_DIR/.work.XXXXXXXX")
 case "$1" in
     create) create ;;
     verify) verify "${2:?Fournir une archive}" ;;
     restore) restore "${2:?Fournir une archive}" ;;
-    list) find backups -maxdepth 1 -type f -name 'recipes_backup_*.tar.gz' -print | sort -r ;;
+    list) find "$BACKUP_DIR" -maxdepth 1 -type f -name 'recipes_backup_*.tar.gz' -print | sort -r ;;
 esac

@@ -2,11 +2,11 @@
 
 # Script de gestion du déploiement - La Taverne de May
 # NAS Ugreen DXP4800 Plus
-# Usage: ./deploy.sh [commande]
+# Usage: ./scripts/deploy.sh [commande]
 
 set -e
 
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 # Couleurs
 RED='\033[0;31m'
@@ -97,8 +97,8 @@ prepare_build_files() {
     fi
 
     # Dockerfile backend
-    if [ -f Dockerfile.backend ]; then
-        cp -v Dockerfile.backend ../recipes-back/Dockerfile
+    if [ -f config/Dockerfile.backend ]; then
+        cp -v config/Dockerfile.backend ../recipes-back/Dockerfile
         print_success "Dockerfile.backend → recipes-back/Dockerfile"
     else
         print_error "Dockerfile.backend introuvable"
@@ -106,8 +106,8 @@ prepare_build_files() {
     fi
 
     # Dockerfile frontend
-    if [ -f Dockerfile.frontend ]; then
-        cp -v Dockerfile.frontend ../recipes-front/Dockerfile
+    if [ -f config/Dockerfile.frontend ]; then
+        cp -v config/Dockerfile.frontend ../recipes-front/Dockerfile
         print_success "Dockerfile.frontend → recipes-front/Dockerfile"
     else
         print_error "Dockerfile.frontend introuvable"
@@ -115,8 +115,8 @@ prepare_build_files() {
     fi
 
     # Configuration Nginx (HTTP simple — SSL géré par Nginx Proxy Manager)
-    if [ -f nginx.conf ]; then
-        cp -v nginx.conf ../recipes-front/nginx.conf
+    if [ -f config/nginx.conf ]; then
+        cp -v config/nginx.conf ../recipes-front/nginx.conf
         print_success "nginx.conf → recipes-front/nginx.conf"
     else
         print_error "nginx.conf introuvable (le fichier nginx-ssl.conf n'est plus utilisé)"
@@ -222,7 +222,7 @@ restart() {
 clean() {
     print_warning "⚠️  ATTENTION : Cette opération supprime les conteneurs ET VOLUMES recipes."
     print_warning "Toutes les données (MongoDB, uploads) seront PERDUES définitivement."
-    print_info "Pensez à faire un backup d'abord : ./deploy.sh backup"
+    print_info "Pensez à faire un backup d'abord : ./scripts/deploy.sh backup"
     echo ""
     read -p "Êtes-vous sûr de vouloir continuer? (y/N) " -n 1 -r
     echo
@@ -245,7 +245,7 @@ ${GREEN}Script de déploiement — La Taverne de May${NC}
 NAS Ugreen DXP4800 Plus
 
 ${YELLOW}Usage:${NC}
-  ./deploy.sh [commande] [options]
+  ./scripts/deploy.sh [commande] [options]
 
 ${YELLOW}Commandes:${NC}
   ${BLUE}deploy${NC}         Déployer/redéployer l'application (build + up)
@@ -260,11 +260,11 @@ ${YELLOW}Commandes:${NC}
   ${BLUE}help${NC}           Afficher cette aide
 
 ${YELLOW}Exemples:${NC}
-  ./deploy.sh deploy               # Déployer l'application
-  ./deploy.sh logs backend         # Logs du backend
-  ./deploy.sh restart frontend     # Redémarrer le frontend
-  ./deploy.sh backup               # Créer un backup
-  ./deploy.sh restore backups/recipes_backup_*.tar.gz
+  ./scripts/deploy.sh deploy               # Déployer l'application
+  ./scripts/deploy.sh logs backend         # Logs du backend
+  ./scripts/deploy.sh restart frontend     # Redémarrer le frontend
+  ./scripts/deploy.sh backup               # Créer un backup
+  ./scripts/deploy.sh restore ../backups/recipes_backup_*.tar.gz
 
 ${YELLOW}Services disponibles:${NC}
   - mongodb             (Base de données)
@@ -287,8 +287,8 @@ case "$1" in
     restart)  restart "$2" ;;
     status)   status ;;
     logs)     logs "$2" ;;
-    backup)   bash ./backup.sh create ;;
-    restore)  bash ./backup.sh restore "${2:-}" ;;
+    backup)   bash ./scripts/backup.sh create ;;
+    restore)  bash ./scripts/backup.sh restore "${2:-}" ;;
     clean)    clean ;;
     help|--help|-h|"") help ;;
     *)

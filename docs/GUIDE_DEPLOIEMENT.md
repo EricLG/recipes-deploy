@@ -15,7 +15,7 @@ Le backend ecoute toujours sur 3000, comme le proxy interne et son healthcheck.
 ## Migration du NAS existant
 
 1. Avant de remplacer les fichiers, sauvegarder le Compose et la configuration
-   actuelle hors du depot. Executer `./deploy.sh backup` avec le script existant.
+   actuelle hors du depot. Executer `./scripts/deploy.sh backup` avec le script existant.
    Sauvegarder aussi le volume uploads et la configuration infra-stack avec les
    outils habituels du NAS : la commande backup ne couvre que MongoDB.
 2. Transferer les fichiers modifies de recipes-deploy, sans remplacer `.env`,
@@ -67,9 +67,9 @@ Le backend ecoute toujours sur 3000, comme le proxy interne et son healthcheck.
 ## Deploiements suivants
 
 ```bash
-./deploy.sh deploy
-./deploy.sh status
-./deploy.sh logs backend
+./scripts/deploy.sh deploy
+./scripts/deploy.sh status
+./scripts/deploy.sh logs backend
 ```
 
 Le script construit avant de mettre les services a jour, sans arreter toute la
@@ -77,14 +77,14 @@ stack. Il attend leur sante pendant au maximum 180 secondes et retourne un echec
 si cette verification echoue. Cela ne remplace pas un test de connexion et des
 parcours metier apres deploiement. Il ne configure pas le proxy partage.
 
-`./deploy.sh stop` arrete la stack recipes ; `start` la redemarre.
+`./scripts/deploy.sh stop` arrete la stack recipes ; `start` la redemarre.
 `restart frontend` redemarre seulement le frontend.
 
 ## Sauvegardes
 
 Voir [BACKUPS.md](BACKUPS.md) pour la sauvegarde et la restauration de MongoDB
-et des images via `backup.sh`. `deploy.sh backup` et `deploy.sh restore` deleguent
+et des images via `scripts/backup.sh`. `scripts/deploy.sh backup` et `scripts/deploy.sh restore` deleguent
 au nouveau script. La synchronisation locale et infra-stack restent separees.
 
-`./deploy.sh clean` supprime les conteneurs et volumes recipes apres confirmation.
+`./scripts/deploy.sh clean` supprime les conteneurs et volumes recipes apres confirmation.
 MongoDB et images sont alors perdus. Ne pas utiliser pour une maintenance normale.

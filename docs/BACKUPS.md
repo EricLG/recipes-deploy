@@ -3,13 +3,13 @@
 Depuis le NAS, dans recipes-deploy :
 
 ```bash
-bash backup.sh create
-bash backup.sh list
-bash backup.sh verify backups/recipes_backup_DATE_PID.tar.gz
-bash backup.sh restore backups/recipes_backup_DATE_PID.tar.gz
+bash scripts/backup.sh create
+bash scripts/backup.sh list
+bash scripts/backup.sh verify ../backups/recipes_backup_DATE_PID.tar.gz
+bash scripts/backup.sh restore ../backups/recipes_backup_DATE_PID.tar.gz
 ```
 
-`deploy.sh backup` et `deploy.sh restore <archive>` restent des raccourcis.
+`scripts/deploy.sh backup` et `scripts/deploy.sh restore <archive>` restent des raccourcis.
 Le script utilise les identifiants deja charges dans le conteneur MongoDB :
 il ne lit ni n'execute le `.env`, et ne l'inclut pas dans l'archive.
 Compose, Dockerfiles et `.env.exemple` restent geres dans Git.
@@ -62,3 +62,17 @@ devra etre adapte separement au nouveau format.
 
 Prerequis : Bash, Docker Compose v2, images backend et MongoDB deja presentes,
 GNU tar, gzip, sha256sum, cmp et flock (util-linux sur le NAS).
+
+## Emplacement des archives
+
+Les scripts utilisent toujours le dossier `../backups` par rapport a
+`recipes-deploy`, independamment du repertoire courant du terminal.
+Sur le NAS : `/volume1/docker/apps/recipes/backups`.
+Sur le poste local : `C:/workspace/recipes/backups`.
+Ce dossier est hors des trois depots Git ; aucune archive n'est versionnee.
+
+Pour les anciennes archives encore dans recipes-deploy/backups sur le NAS,
+les deplacer dans le dossier voisin avant de supprimer l'ancien dossier.
+Verifier qu'aucun fichier de meme nom n'existe deja a destination et ne pas lancer
+une sauvegarde pendant le deplacement. Les anciennes archives restent utilisables
+par leur chemin explicite ; le script ne les deplace ni ne les supprime tout seul.
