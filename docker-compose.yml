@@ -1,31 +1,4 @@
 services:
-  # DDNS - Mise à jour IP automatique
-  duckdns:
-    image: lscr.io/linuxserver/duckdns:latest
-    container_name: duckdns
-    restart: unless-stopped
-    environment:
-      - SUBDOMAINS=la-taverne-de-may
-      - TOKEN=${DUCKDNS_TOKEN}
-      - TZ=Europe/Paris
-
-  # Reverse proxy + SSL
-  nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
-    container_name: nginx-proxy-manager
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "81:81"
-    volumes:
-      - npm_data:/data
-      - npm_letsencrypt:/etc/letsencrypt
-    networks:
-      - app-network
-      - proxy-network
-
-  # MongoDB - inchangé
   mongodb:
     image: mongo:8
     container_name: app-mongodb
@@ -54,7 +27,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${BACKEND_PORT:-3000}
+      PORT: 3000
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
     volumes:
@@ -80,7 +53,10 @@ services:
     depends_on:
       - backend
     networks:
-      - app-network
+      app-network: {}
+      proxy-network:
+        aliases:
+          - recipes-frontend
 
 networks:
   app-network:
@@ -92,8 +68,6 @@ networks:
     external: true
 
 volumes:
-  npm_data:
-  npm_letsencrypt:
   mongodb_data:
   mongodb_config:
   uploads_data:
