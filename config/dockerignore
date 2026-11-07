@@ -1,0 +1,23 @@
+# Dependencies and generated files must come from the Linux build itself.
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.angular
+**/.cache
+**/__pycache__
+
+# Local configuration, history and runtime data are not build inputs.
+**/.git
+**/.env
+**/.env.*
+**/.vscode
+**/.idea
+**/uploads
+**/backups
+**/mongodb_data
+**/mongodb_config
+**/*.log
+**/*.pid
+**/*.tar.gz
+**/*.dump

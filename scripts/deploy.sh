@@ -96,6 +96,18 @@ prepare_build_files() {
         exit 1
     fi
 
+    # Verifier les fichiers avant de modifier les contextes voisins.
+    for file in Dockerfile.backend Dockerfile.frontend nginx.conf dockerignore; do
+        if [ ! -f "config/$file" ]; then
+            print_error "config/$file introuvable"
+            exit 1
+        fi
+    done
+
+    # Exclure les secrets, donnees et dependances locales des deux builds.
+    cp -v config/dockerignore ../recipes-back/.dockerignore
+    cp -v config/dockerignore ../recipes-front/.dockerignore
+
     # Dockerfile backend
     if [ -f config/Dockerfile.backend ]; then
         cp -v config/Dockerfile.backend ../recipes-back/Dockerfile

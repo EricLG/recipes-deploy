@@ -24,7 +24,7 @@ restent exclus de Git. Les commandes et prerequis sont detailles dans la documen
 ## Organisation
 
 - `docker-compose.yml` : orchestration des services, conservee a la racine.
-- `config/` : Dockerfiles backend/frontend et configuration Nginx.
+- `config/` : Dockerfiles backend/frontend, configuration Nginx et modele dockerignore.
 - `scripts/` : scripts de gestion, restauration locale et leurs tests dans `tests/`.
 - `docs/` : documentation.
 - `../backups/` : archives et recuperations locales, hors du depot Git.
